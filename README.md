@@ -10,7 +10,7 @@ The auto-configuration makes sure that the migrations happen before any Spring D
 <!-- -->
     <dependency>
         <groupId>io.github.hzpz.spring.boot</groupId>
-        <artifactId>spring-boot-autoconfigure-mongeez</artifactId>
+        <artifactId>mongeez-spring-boot-starter</artifactId>
         <version>1.0.1</version>
     </dependency>
     <dependency>
