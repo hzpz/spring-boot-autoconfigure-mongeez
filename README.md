@@ -20,7 +20,7 @@ The auto-configuration makes sure that the migrations happen before any Spring D
     <dependency>
         <groupId>org.mongeez</groupId>
         <artifactId>mongeez</artifactId>
-        <version>0.9.4</version>
+        <version>0.9.6</version>
     </dependency>
 
  * [Create a mongeez.xml file that includes all change logs][mongeez.xml] at `db/mongeez.xml`.
