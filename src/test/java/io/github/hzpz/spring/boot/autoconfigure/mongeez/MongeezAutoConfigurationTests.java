@@ -21,11 +21,12 @@ import org.mongeez.Mongeez;
 import org.mongeez.MongoAuth;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.test.util.EnvironmentTestUtils;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 
@@ -54,7 +55,7 @@ public class MongeezAutoConfigurationTests {
 
     @Test
     public void shouldDoNothingIfDisabled() {
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.enabled:false");
+        TestPropertyValues.of("mongeez.enabled:false").applyTo(this.context);
         registerAndRefresh(MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         assumeThat(this.context.getBeanNamesForType(Mongo.class), not(emptyArray()));
         assertThat(this.context.getBeanNamesForType(Mongeez.class), emptyArray());
@@ -63,11 +64,12 @@ public class MongeezAutoConfigurationTests {
     @Test
     public void shouldUseDatabaseFromMongoProperties() {
         String database = "foo";
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.database:" + database);
+        TestPropertyValues.of("spring.data.mongodb.database:" + database).applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         Object mongeezDatabase = ReflectionTestUtils.getField(mongeez, "dbName");
+        assertNotNull(mongeezDatabase);
         assertThat(mongeezDatabase.toString(), equalTo(database));
     }
 
@@ -75,58 +77,65 @@ public class MongeezAutoConfigurationTests {
     public void shouldUseDatabaseOverrideFromMongeezProperties() {
         String mongoDatabase = "foo";
         String mongeezOverrideDatabase = "bar";
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.database:" + mongoDatabase);
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.database:" + mongeezOverrideDatabase);
+        TestPropertyValues.of("spring.data.mongodb.database:" + mongoDatabase)
+            .and("mongeez.database:" + mongeezOverrideDatabase)
+            .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         Object mongeezActualDatabase = ReflectionTestUtils.getField(mongeez, "dbName");
+        assertNotNull(mongeezActualDatabase);
         assertThat(mongeezActualDatabase.toString(), equalTo(mongeezOverrideDatabase));
     }
 
     @Test
     public void shouldUseAuthenticationDatabaseFromMongoProperties() {
         String database = "foo";
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.authenticationDatabase:" + database);
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.username:user");
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.password:pass");
+        TestPropertyValues.of("spring.data.mongodb.authenticationDatabase:" + database)
+            .and("mongeez.username:user")
+            .and("mongeez.password:pass")
+            .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
-        String authDb = ((MongoAuth) ReflectionTestUtils.getField(mongeez, "auth")).getAuthDb();
-        assertThat(authDb, equalTo(database));
+        MongoAuth auth = (MongoAuth) ReflectionTestUtils.getField(mongeez, "auth");
+        assertNotNull(auth);
+        assertThat(auth.getAuthDb(), equalTo(database));
     }
 
     @Test
     public void shouldUseAuthenticationDatabaseOverrideFromMongeezProperties() {
         String database = "foo";
         String mongeezOverrideDatabase = "bar";
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.authenticationDatabase:" + database);
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.authenticationDatabase:" + mongeezOverrideDatabase);
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.username:user");
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.password:pass");
+        TestPropertyValues.of("spring.data.mongodb.authenticationDatabase:" + database)
+            .and("mongeez.authenticationDatabase:" + mongeezOverrideDatabase)
+            .and("mongeez.username:user")
+            .and("mongeez.password:pass")
+            .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
-        String authDb = ((MongoAuth) ReflectionTestUtils.getField(mongeez, "auth")).getAuthDb();
-        assertThat(authDb, equalTo(mongeezOverrideDatabase));
+        MongoAuth auth = (MongoAuth) ReflectionTestUtils.getField(mongeez, "auth");
+        assertNotNull(auth);
+        assertThat(auth.getAuthDb(), equalTo(mongeezOverrideDatabase));
     }
 
     @Test(expected = BeanCreationException.class)
     public void shouldFailIfOnlyMongoCredentialsProvided() {
         String mongoUsername = "foo";
         String mongoPassword = "bar";
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.username:" + mongoUsername);
-        EnvironmentTestUtils.addEnvironment(this.context, "spring.data.mongodb.password:" + mongoPassword);
+        TestPropertyValues.of("spring.data.mongodb.username:" + mongoUsername)
+            .and("spring.data.mongodb.password:" + mongoPassword)
+            .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
     }
 
     @Test(expected = BeanCreationException.class)
     public void shouldFailIfLocationDoesNotExist() {
-        EnvironmentTestUtils.addEnvironment(this.context, "mongeez.location:does/not/exist");
+        TestPropertyValues.of("mongeez.location:does/not/exist").applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
     }
 
 }

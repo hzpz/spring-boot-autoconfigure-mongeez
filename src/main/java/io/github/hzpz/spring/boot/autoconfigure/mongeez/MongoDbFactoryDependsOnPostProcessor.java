@@ -39,16 +39,6 @@ public class MongoDbFactoryDependsOnPostProcessor implements BeanFactoryPostProc
         this.dependsOn = dependsOn;
     }
 
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-        for (String beanName : getMongoDbFactoryBeanNames(beanFactory)) {
-            BeanDefinition definition = getBeanDefinition(beanName, beanFactory);
-            definition.setDependsOn(StringUtils.addStringToArray(
-                    definition.getDependsOn(), this.dependsOn));
-        }
-
-    }
-
     private static BeanDefinition getBeanDefinition(String beanName,
                                                     ConfigurableListableBeanFactory beanFactory) {
         try {
@@ -57,15 +47,24 @@ public class MongoDbFactoryDependsOnPostProcessor implements BeanFactoryPostProc
             BeanFactory parentBeanFactory = beanFactory.getParentBeanFactory();
             if (parentBeanFactory instanceof ConfigurableListableBeanFactory) {
                 return getBeanDefinition(beanName,
-                        (ConfigurableListableBeanFactory) parentBeanFactory);
+                    (ConfigurableListableBeanFactory) parentBeanFactory);
             }
             throw ex;
         }
     }
 
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        for (String beanName : getMongoDbFactoryBeanNames(beanFactory)) {
+            BeanDefinition definition = getBeanDefinition(beanName, beanFactory);
+            definition.setDependsOn(StringUtils.addStringToArray(
+                definition.getDependsOn(), this.dependsOn));
+        }
+
+    }
+
     private String[] getMongoDbFactoryBeanNames(ListableBeanFactory beanFactory) {
         return BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
-                beanFactory, MongoDbFactory.class, true, false);
+            beanFactory, MongoDbFactory.class, true, false);
     }
 
 }
