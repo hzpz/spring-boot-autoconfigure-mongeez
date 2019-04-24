@@ -15,6 +15,8 @@
 package io.github.hzpz.spring.boot.autoconfigure.mongeez;
 
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import org.mongeez.Mongeez;
 import org.mongeez.MongeezRunner;
 import org.mongeez.MongoAuth;
@@ -66,6 +68,8 @@ public class MongeezAutoConfiguration {
     @Import(MongeezDataMongoDependencyConfiguration.class)
     public static class MongeezConfiguration {
 
+        private final static String MONGO_PROPERTIES_DEFAULT_URI = "mongodb://localhost/test";
+
         @Autowired
         private MongeezProperties mongeezProperties = new MongeezProperties();
 
@@ -80,17 +84,36 @@ public class MongeezAutoConfiguration {
 
         @Bean(initMethod = "process")
         public Mongeez mongeez(MongoProperties mongoProperties, Mongo mongo) {
+            String uri = mongoProperties.getUri();
+
             Mongeez mongeez = new Mongeez();
+            mongeez.setFile(this.resourceLoader.getResource(this.mongeezProperties.getLocation()));
+
+            if (uri != null && !MONGO_PROPERTIES_DEFAULT_URI.equalsIgnoreCase(uri)) {  // ignore another params if spring.data.mongodb.uri declared
+                MongoClientURI mongoUri = new MongoClientURI(uri);
+                MongoClient mongoClient = new MongoClient(mongoUri);
+
+                if (!StringUtils.isEmpty(mongoUri.getUsername())) {
+                    MongoAuth mongoAuth = new MongoAuth(mongoUri.getUsername(), new String(mongoUri.getPassword()), mongoUri.getDatabase());
+                    mongeez.setAuth(mongoAuth);
+                }
+
+                mongeez.setDbName(mongoUri.getDatabase());
+                mongeez.setMongo(mongoClient);
+
+                return mongeez;
+            }
+
             mongeez.setMongo(mongo);
 
             copyMissingProperties(mongoProperties, this.mongeezProperties);
 
             mongeez.setDbName(this.mongeezProperties.getDatabase());
+
             if (this.mongeezProperties.hasCredentials()) {
                 MongoAuth auth = this.mongeezProperties.createMongoAuth();
                 mongeez.setAuth(auth);
             }
-            mongeez.setFile(this.resourceLoader.getResource(this.mongeezProperties.getLocation()));
             return mongeez;
         }
 
