@@ -44,7 +44,6 @@ public class MongeezAutoConfigurationTests {
     private void registerAndRefresh(Class<?>... annotatedClasses) {
         this.context.register(annotatedClasses);
         this.context.refresh();
-
     }
 
     @Test
@@ -66,10 +65,9 @@ public class MongeezAutoConfigurationTests {
         String database = "foo";
         TestPropertyValues.of("spring.data.mongodb.database:" + database).applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         Object mongeezDatabase = ReflectionTestUtils.getField(mongeez, "dbName");
-        assertNotNull(mongeezDatabase);
         assertThat(mongeezDatabase.toString(), equalTo(database));
     }
 
@@ -81,10 +79,9 @@ public class MongeezAutoConfigurationTests {
             .and("mongeez.database:" + mongeezOverrideDatabase)
             .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         Object mongeezActualDatabase = ReflectionTestUtils.getField(mongeez, "dbName");
-        assertNotNull(mongeezActualDatabase);
         assertThat(mongeezActualDatabase.toString(), equalTo(mongeezOverrideDatabase));
     }
 
@@ -96,10 +93,9 @@ public class MongeezAutoConfigurationTests {
             .and("mongeez.password:pass")
             .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         MongoAuth auth = (MongoAuth) ReflectionTestUtils.getField(mongeez, "auth");
-        assertNotNull(auth);
         assertThat(auth.getAuthDb(), equalTo(database));
     }
 
@@ -113,10 +109,9 @@ public class MongeezAutoConfigurationTests {
             .and("mongeez.password:pass")
             .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
         Mongeez mongeez = this.context.getBean(Mongeez.class);
         MongoAuth auth = (MongoAuth) ReflectionTestUtils.getField(mongeez, "auth");
-        assertNotNull(auth);
         assertThat(auth.getAuthDb(), equalTo(mongeezOverrideDatabase));
     }
 
@@ -128,14 +123,14 @@ public class MongeezAutoConfigurationTests {
             .and("spring.data.mongodb.password:" + mongoPassword)
             .applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
     }
 
     @Test(expected = BeanCreationException.class)
     public void shouldFailIfLocationDoesNotExist() {
         TestPropertyValues.of("mongeez.location:does/not/exist").applyTo(this.context);
         registerAndRefresh(DoNotExecuteMongeezPostProcessor.class,
-            MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
+                MongoAutoConfiguration.class, MongeezAutoConfiguration.class);
     }
 
 }
